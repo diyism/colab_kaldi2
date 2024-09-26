@@ -1,3 +1,4 @@
+import glob
 from pathlib import Path
 from lhotse import RecordingSet, SupervisionSet, CutSet
 from lhotse.audio import Recording, AudioSource
@@ -8,7 +9,7 @@ def create_dataset(audio_file, text_file):
     recording = Recording.from_file(audio_file)
     
     # 读取转写文本
-    with open(text_file, 'r') as f:
+    with open(text_file, 'r', encoding='utf-8') as f:
         text = f.read().strip()
     
     # 创建SupervisionSegment对象
@@ -32,49 +33,22 @@ def create_dataset(audio_file, text_file):
     
     return cut_set
 
-#cut_set = create_dataset('my-voice1.wav', 'my-voice1-transcribe.txt')
-#cut_set.to_jsonl('my_dataset.jsonl')
-
-import glob
-
+# 主处理流程
 audio_files = glob.glob('*.wav')
 cut_sets = []
 
 for audio_file in audio_files:
     text_file = audio_file.replace('.wav', '.txt')
-    cut_set = create_dataset(audio_file, text_file)
-    cut_sets.append(cut_set)
+    if Path(text_file).exists():  # 确保对应的文本文件存在
+        cut_set = create_dataset(audio_file, text_file)
+        cut_sets.append(cut_set)
+    else:
+        print(f"Warning: No transcription file found for {audio_file}")
 
 # 合并所有CutSet
-final_cut_set = CutSet.from_cuts(cut_sets)
-final_cut_set.to_jsonl('my_complete_dataset.jsonl')
-
-==============================================================================================
-      
-if [ $stage -le 0 ] && [ $stop_stage -ge 0 ]; then
-  log "Stage 0: Prepare custom dataset."
-  mkdir -p data/fbank
-  if [ ! -e data/fbank/.custom_dataset.done ]; then
-    # 将my_dataset.jsonl复制到data/fbank目录
-    cp my_dataset.jsonl data/fbank/cuts.jsonl
-
-    # 使用Lhotse工具提取特征
-    lhotse feat extract-and-store-features data/fbank/cuts.jsonl data/fbank/feats.lca
-
-    # 压缩cuts文件
-    gzip data/fbank/cuts.jsonl
-
-    # 创建语言模型数据（如果需要）
-    # 这里需要根据您的具体需求来定制
-
-    touch data/fbank/.custom_dataset.done
-  else
-    log "Custom dataset already processed, skipping."
-  fi
-fi
-
-# 注释掉或删除原有的WenetSpeech数据处理部分
-# if [ $stage -le 0 ] && [ $stop_stage -ge 0 ]; then
-#   log "Stage 0: Prepare wewetspeech dataset."
-#   ...
-# fi
+if cut_sets:
+    final_cut_set = CutSet.from_cuts([cut for cs in cut_sets for cut in cs])
+    final_cut_set.to_jsonl('my_complete_dataset.jsonl')
+    print(f"Dataset created: my_complete_dataset.jsonl")
+else:
+    print("No valid audio-transcription pairs found.")
