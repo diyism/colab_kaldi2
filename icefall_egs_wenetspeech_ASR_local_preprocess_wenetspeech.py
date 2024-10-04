@@ -46,10 +46,9 @@ def preprocess_local_data(perturb_speed: bool = False):
         logging.info("Applying speed perturbation")
         cuts_train = cuts_train + cuts_train.perturb_speed(0.9) + cuts_train.perturb_speed(1.1)
     
-    storage = LilcomFilesWriter(output_dir)
     cuts_train = cuts_train.compute_and_store_features(
         extractor=extractor,
-        storage_type=storage,
+        storage_type=LilcomFilesWriter,
         storage_path=output_dir,
         num_jobs=min(4, os.cpu_count()),
     )
