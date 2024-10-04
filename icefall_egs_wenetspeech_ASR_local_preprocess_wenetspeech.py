@@ -46,13 +46,13 @@ def preprocess_local_data(perturb_speed: bool = False):
         logging.info("Applying speed perturbation")
         cuts_train = cuts_train + cuts_train.perturb_speed(0.9) + cuts_train.perturb_speed(1.1)
     
-    with LilcomFilesWriter(output_dir) as storage:
-        cuts_train = cuts_train.compute_and_store_features(
-            extractor=extractor,
-            storage_type=storage,
-            storage_path=output_dir,
-            num_jobs=min(4, os.cpu_count()),
-        )
+    storage = LilcomFilesWriter(output_dir)
+    cuts_train = cuts_train.compute_and_store_features(
+        extractor=extractor,
+        storage_type=storage,
+        storage_path=output_dir,
+        num_jobs=min(4, os.cpu_count()),
+    )
 
     logging.info("Saving cuts with features")
     cuts_train.to_jsonl(output_dir / "cuts_train.jsonl.gz")
