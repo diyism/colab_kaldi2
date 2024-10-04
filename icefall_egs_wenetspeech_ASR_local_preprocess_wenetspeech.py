@@ -50,6 +50,7 @@ def preprocess_local_data(perturb_speed: bool = False):
         cuts_train = cuts_train.compute_and_store_features(
             extractor=extractor,
             storage_type=storage,
+            storage_path=output_dir,
             num_jobs=min(4, os.cpu_count()),
         )
 
