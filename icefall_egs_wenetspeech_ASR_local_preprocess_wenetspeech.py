@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import os
 from pathlib import Path
 
 from lhotse import CutSet, Fbank, FbankConfig, LilcomChunkyWriter
