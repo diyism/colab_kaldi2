@@ -29,15 +29,18 @@ log() {
 log "dl_dir: $dl_dir"
 
 if [ $stage -le 0 ] && [ $stop_stage -ge 0 ]; then
-  log "Stage 0: Copy local data"
+  log "Stage 0: Copy local data and download musan if needed"
   mkdir -p data/manifests
   cp $local_data_path data/manifests/cuts_train.jsonl.gz
+
+  if [ ! -d $dl_dir/musan ]; then
+    log "Downloading musan dataset"
+    lhotse download musan $dl_dir
+  fi
 fi
 
 if [ $stage -le 1 ] && [ $stop_stage -ge 1 ]; then
   log "Stage 1: Prepare musan manifest"
-  # We assume that you have downloaded the musan corpus
-  # to data/musan
   mkdir -p data/manifests
   lhotse prepare musan $dl_dir/musan data/manifests
 fi
@@ -49,8 +52,6 @@ if [ $stage -le 2 ] && [ $stop_stage -ge 2 ]; then
     touch data/fbank/.preprocess_complete
   fi
 fi
-
-# Remove or comment out stages 3-10 as they are specific to WenetSpeech data
 
 if [ $stage -le 3 ] && [ $stop_stage -ge 3 ]; then
   log "Stage 3: Combine features"
