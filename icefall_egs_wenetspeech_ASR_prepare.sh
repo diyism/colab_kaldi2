@@ -48,7 +48,7 @@ fi
 if [ $stage -le 2 ] && [ $stop_stage -ge 2 ]; then
   log "Stage 2: Preprocess local manifest"
   if [ ! -f data/fbank/.preprocess_complete ]; then
-    python3 ./local/preprocess_local_data.py
+    python3 ./local/preprocess_wenetspeech.py --perturb-speed True
     touch data/fbank/.preprocess_complete
   fi
 fi
