@@ -5,8 +5,8 @@ import logging
 import os
 from pathlib import Path
 
-from lhotse import CutSet, Fbank, FbankConfig, LilcomChunkyWriter
-from lhotse.recipes.utils import read_manifests_if_cached
+from lhotse import CutSet, Fbank, FbankConfig
+from lhotse.features.io import LilcomFilesWriter
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)s [%(filename)s:%(lineno)d] %(message)s",
@@ -39,19 +39,22 @@ def preprocess_local_data(perturb_speed: bool = False):
     
     extractor = Fbank(FbankConfig(num_mel_bins=80))
 
-    with LilcomChunkyWriter("data/fbank") as storage:
-        if perturb_speed:
-            logging.info("Applying speed perturbation")
-            cuts_train = cuts_train + cuts_train.perturb_speed(0.9) + cuts_train.perturb_speed(1.1)
-        
+    output_dir = Path("data/fbank")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if perturb_speed:
+        logging.info("Applying speed perturbation")
+        cuts_train = cuts_train + cuts_train.perturb_speed(0.9) + cuts_train.perturb_speed(1.1)
+    
+    with LilcomFilesWriter(output_dir) as storage:
         cuts_train = cuts_train.compute_and_store_features(
             extractor=extractor,
-            storage=storage,
+            storage_type=storage,
             num_jobs=min(4, os.cpu_count()),
         )
 
     logging.info("Saving cuts with features")
-    cuts_train.to_jsonl("data/fbank/cuts_train.jsonl.gz")
+    cuts_train.to_jsonl(output_dir / "cuts_train.jsonl.gz")
 
 def main():
     args = get_parser().parse_args()
