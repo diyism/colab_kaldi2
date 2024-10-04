@@ -32,6 +32,7 @@ if [ $stage -le 0 ] && [ $stop_stage -ge 0 ]; then
   log "Stage 0: Copy local data and download musan if needed"
   mkdir -p data/manifests
   cp $local_data_path data/manifests/cuts_train.jsonl.gz
+  cp /content/drive/MyDrive/ColabData/KWS/kws_create_dataset/*.wav /content/icefall/egs/wenetspeech/ASR/data/
 
   if [ ! -d $dl_dir/musan ]; then
     log "Downloading musan dataset"
