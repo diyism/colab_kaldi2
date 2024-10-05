@@ -74,7 +74,7 @@ if [ $stage -le 4 ] && [ $stop_stage -ge 4 ]; then
   fi
   if [ ! -f $lang_char_dir/text ] || [ ! -s $lang_char_dir/text ]; then
     log "Prepare text."
-    gunzip -c data/manifests/wenetspeech_supervisions_L.jsonl.gz \
+    gunzip -c data/manifests/cuts_train.jsonl.gz \
       | jq '.text' | sed 's/"//g' \
       | ./local/text2token.py -t "char" > $lang_char_dir/text
   fi
