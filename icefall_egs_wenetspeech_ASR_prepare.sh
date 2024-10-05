@@ -61,6 +61,51 @@ if [ $stage -le 3 ] && [ $stop_stage -ge 3 ]; then
   fi
 fi
 
+if [ $stage -le 4 ] && [ $stop_stage -ge 4 ]; then
+  log "Stage 4: Prepare char based lang"
+  mkdir -p $lang_char_dir
+
+  if ! which jq; then
+      echo "This script is intended to be used with jq but you have not installed jq
+      Note: in Linux, you can install jq with the following command:
+      1. wget -O jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+      2. chmod +x ./jq
+      3. cp jq /usr/bin" && exit 1
+  fi
+  if [ ! -f $lang_char_dir/text ] || [ ! -s $lang_char_dir/text ]; then
+    log "Prepare text."
+    gunzip -c data/manifests/wenetspeech_supervisions_L.jsonl.gz \
+      | jq '.text' | sed 's/"//g' \
+      | ./local/text2token.py -t "char" > $lang_char_dir/text
+  fi
+
+  # The implementation of chinese word segmentation for text,
+  # and it will take about 15 minutes.
+  if [ ! -f $lang_char_dir/text_words_segmentation ]; then
+    python3 ./local/text2segments.py \
+      --num-process $nj \
+      --input-file $lang_char_dir/text \
+      --output-file $lang_char_dir/text_words_segmentation
+  fi
+
+  cat $lang_char_dir/text_words_segmentation | sed 's/ /\n/g' \
+    | sort -u | sed '/^$/d' | uniq > $lang_char_dir/words_no_ids.txt
+
+  if [ ! -f $lang_char_dir/words.txt ]; then
+    python3 ./local/prepare_words.py \
+      --input-file $lang_char_dir/words_no_ids.txt \
+      --output-file $lang_char_dir/words.txt
+  fi
+fi
+
+if [ $stage -le 5 ] && [ $stop_stage -ge 5 ]; then
+  log "Stage 5: Prepare char based L_disambig.pt"
+  if [ ! -f data/lang_char/L_disambig.pt ]; then
+    python3 ./local/prepare_char.py \
+      --lang-dir data/lang_char
+  fi
+fi
+
 # Add any additional stages you need for your specific use case
 
 log "Data preparation completed."
